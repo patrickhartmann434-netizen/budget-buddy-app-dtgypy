@@ -106,6 +106,38 @@ function RootLayoutNav() {
                 }}
               />
 
+              {/* Budget Action Modals */}
+              <Stack.Screen
+                name="add-income"
+                options={{
+                  presentation: "formSheet",
+                  title: "Add Income",
+                  sheetGrabberVisible: true,
+                  sheetAllowedDetents: [0.9, 1.0],
+                  sheetCornerRadius: 20,
+                }}
+              />
+              <Stack.Screen
+                name="add-expense"
+                options={{
+                  presentation: "formSheet",
+                  title: "Add Expense",
+                  sheetGrabberVisible: true,
+                  sheetAllowedDetents: [0.9, 1.0],
+                  sheetCornerRadius: 20,
+                }}
+              />
+              <Stack.Screen
+                name="set-budget"
+                options={{
+                  presentation: "formSheet",
+                  title: "Set Budget",
+                  sheetGrabberVisible: true,
+                  sheetAllowedDetents: [0.9, 1.0],
+                  sheetCornerRadius: 20,
+                }}
+              />
+
               {/* Modal Demo Screens */}
               <Stack.Screen
                 name="modal"

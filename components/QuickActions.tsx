@@ -1,47 +1,45 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
+import * as Haptics from 'expo-haptics';
 
 export function QuickActions() {
   const theme = useTheme();
 
   const handleAddIncome = () => {
-    Alert.alert(
-      'Add Income',
-      'This feature will allow you to add income transactions.',
-      [{ text: 'OK' }]
-    );
-    console.log('Add income pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    console.log('Add income pressed - navigating to modal');
+    router.push('/add-income');
   };
 
   const handleAddExpense = () => {
-    Alert.alert(
-      'Add Expense',
-      'This feature will allow you to add expense transactions.',
-      [{ text: 'OK' }]
-    );
-    console.log('Add expense pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    console.log('Add expense pressed - navigating to modal');
+    router.push('/add-expense');
   };
 
   const handleSetBudget = () => {
-    Alert.alert(
-      'Set Budget',
-      'This feature will allow you to set budgets for different categories.',
-      [{ text: 'OK' }]
-    );
-    console.log('Set budget pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    console.log('Set budget pressed - navigating to modal');
+    router.push('/set-budget');
   };
 
   const handleViewReports = () => {
-    Alert.alert(
-      'View Reports',
-      'This feature will show detailed financial reports and analytics.',
-      [{ text: 'OK' }]
-    );
-    console.log('View reports pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    console.log('View reports pressed - navigating to savings calculator');
+    router.push('/savings-calculator');
   };
 
   const actions = [
