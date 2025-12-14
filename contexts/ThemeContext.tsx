@@ -17,7 +17,7 @@ const THEME_STORAGE_KEY = '@budgetbuddy_theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark'); // Default to dark
   const [isLoading, setIsLoading] = useState(true);
 
   // Load theme preference from storage
@@ -30,6 +30,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
         setThemeModeState(savedTheme as ThemeMode);
+        console.log('Theme loaded from storage:', savedTheme);
+      } else {
+        console.log('No saved theme, using default: dark');
       }
     } catch (error) {
       console.error('Error loading theme preference:', error);
@@ -53,6 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     ? systemColorScheme === 'dark' 
     : themeMode === 'dark';
 
+  // Show nothing while loading to prevent flash
   if (isLoading) {
     return null;
   }

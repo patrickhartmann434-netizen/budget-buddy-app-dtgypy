@@ -2,11 +2,11 @@
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Alert } from "react-native";
+import { Alert, useColorScheme } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -26,7 +26,7 @@ export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
 
-function RootLayoutContent() {
+function RootLayoutNav() {
   const networkState = useNetworkState();
   const { isDark } = useThemeMode();
   const [loaded] = useFonts({
@@ -85,7 +85,7 @@ function RootLayoutContent() {
       <StatusBar style={isDark ? "light" : "dark"} animated />
       <ThemeProvider value={isDark ? CustomDarkTheme : CustomDefaultTheme}>
         <WidgetProvider>
-          <GestureHandlerRootView>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack>
               {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -144,7 +144,7 @@ export default function RootLayout() {
   return (
     <CustomThemeProvider>
       <SettingsProvider>
-        <RootLayoutContent />
+        <RootLayoutNav />
       </SettingsProvider>
     </CustomThemeProvider>
   );

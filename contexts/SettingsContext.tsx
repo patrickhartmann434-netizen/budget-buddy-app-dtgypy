@@ -56,6 +56,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (savedCurrency) {
         const parsedCurrency = JSON.parse(savedCurrency);
         setCurrencyState(parsedCurrency);
+        console.log('Currency loaded from storage:', parsedCurrency);
+      } else {
+        console.log('No saved currency, using default: USD');
       }
     } catch (error) {
       console.error('Error loading currency preference:', error);
@@ -78,6 +81,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return `${currency.symbol}${amount.toFixed(2)}`;
   };
 
+  // Show nothing while loading to prevent errors
   if (isLoading) {
     return null;
   }
