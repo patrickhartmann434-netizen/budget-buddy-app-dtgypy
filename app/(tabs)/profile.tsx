@@ -2,13 +2,19 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { IconSymbol } from "@/components/IconSymbol";
 import { GlassView } from "expo-glass-effect";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
+import { useSettings } from "@/contexts/SettingsContext";
+import { useThemeMode } from "@/contexts/ThemeContext";
+import * as Haptics from "expo-haptics";
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const { currency } = useSettings();
+  const { themeMode } = useThemeMode();
 
   const handleEditProfile = () => {
     Alert.alert(
@@ -20,11 +26,8 @@ export default function ProfileScreen() {
   };
 
   const handleSettings = () => {
-    Alert.alert(
-      'Settings',
-      'This feature will open app settings.',
-      [{ text: 'OK' }]
-    );
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/settings');
     console.log('Settings pressed');
   };
 
@@ -44,6 +47,19 @@ export default function ProfileScreen() {
       [{ text: 'OK' }]
     );
     console.log('Help pressed');
+  };
+
+  const getThemeLabel = () => {
+    switch (themeMode) {
+      case 'light':
+        return 'Light Mode';
+      case 'dark':
+        return 'Dark Mode';
+      case 'system':
+        return 'System Default';
+      default:
+        return 'System Default';
+    }
   };
 
   return (
@@ -86,7 +102,7 @@ export default function ProfileScreen() {
           </View>
         </GlassView>
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Settings</Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Preferences</Text>
 
         <GlassView style={[
           styles.section,
@@ -95,7 +111,12 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.menuItem} onPress={handleSettings} activeOpacity={0.7}>
             <View style={styles.menuItemLeft}>
               <IconSymbol ios_icon_name="gear" android_material_icon_name="settings" size={20} color={colors.primary} />
-              <Text style={[styles.menuItemText, { color: theme.colors.text }]}>App Settings</Text>
+              <View>
+                <Text style={[styles.menuItemText, { color: theme.colors.text }]}>App Settings</Text>
+                <Text style={[styles.menuItemSubtext, { color: colors.textSecondary }]}>
+                  {getThemeLabel()} • {currency.code}
+                </Text>
+              </View>
             </View>
             <IconSymbol ios_icon_name="chevron.right" android_material_icon_name="chevron-right" size={20} color={theme.dark ? '#98989D' : '#666'} />
           </TouchableOpacity>
@@ -205,10 +226,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   menuItemText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  menuItemSubtext: {
+    fontSize: 13,
+    marginTop: 2,
   },
   versionContainer: {
     alignItems: 'center',

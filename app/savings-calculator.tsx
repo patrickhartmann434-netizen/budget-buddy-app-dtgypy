@@ -1,24 +1,33 @@
 
 import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Platform } from "react-native";
 import { Stack } from "expo-router";
 import { useTheme } from "@react-navigation/native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
 import { useBudgetData } from "@/hooks/useBudgetData";
 import { defaultCategories } from "@/data/categories";
+import { useSettings } from "@/contexts/SettingsContext";
+import * as Haptics from "expo-haptics";
+
+type ReductionType = 'percentage' | 'amount';
+type ReductionPeriod = 'daily' | 'monthly';
 
 interface CategoryReduction {
   categoryId: string;
   categoryName: string;
   currentSpending: number;
+  reductionType: ReductionType;
   reductionPercentage: number;
+  reductionAmount: number;
+  reductionPeriod: ReductionPeriod;
   color: string;
 }
 
 export default function SavingsCalculator() {
   const theme = useTheme();
   const { transactions, isLoading } = useBudgetData();
+  const { formatCurrency } = useSettings();
   
   // Calculate spending by category with memoization
   const categorySpending = useMemo(() => {
@@ -32,7 +41,10 @@ export default function SavingsCalculator() {
           categoryId: category.id,
           categoryName: category.name,
           currentSpending: spent,
+          reductionType: 'percentage' as ReductionType,
           reductionPercentage: 0,
+          reductionAmount: 0,
+          reductionPeriod: 'monthly' as ReductionPeriod,
           color: category.color,
         };
       })
@@ -47,21 +59,30 @@ export default function SavingsCalculator() {
     setReductions(categorySpending);
   }, [categorySpending]);
 
-  const updateReduction = (categoryId: string, percentage: number) => {
+  const updateReduction = (categoryId: string, updates: Partial<CategoryReduction>) => {
     setReductions(prev =>
       prev.map(cat =>
         cat.categoryId === categoryId
-          ? { ...cat, reductionPercentage: Math.min(100, Math.max(0, percentage)) }
+          ? { ...cat, ...updates }
           : cat
       )
     );
   };
 
+  const calculateCategorySavings = (cat: CategoryReduction): number => {
+    if (cat.reductionType === 'percentage') {
+      return (cat.currentSpending * cat.reductionPercentage) / 100;
+    } else {
+      // Amount-based reduction
+      const monthlyReduction = cat.reductionPeriod === 'daily' 
+        ? cat.reductionAmount * 30 
+        : cat.reductionAmount;
+      return Math.min(monthlyReduction, cat.currentSpending);
+    }
+  };
+
   const totalCurrentSpending = reductions.reduce((sum, cat) => sum + cat.currentSpending, 0);
-  const totalSavings = reductions.reduce(
-    (sum, cat) => sum + (cat.currentSpending * cat.reductionPercentage) / 100,
-    0
-  );
+  const totalSavings = reductions.reduce((sum, cat) => sum + calculateCategorySavings(cat), 0);
   const newMonthlySpending = totalCurrentSpending - totalSavings;
   const annualSavings = totalSavings * 12;
 
@@ -112,7 +133,7 @@ export default function SavingsCalculator() {
               Discover Your Savings Potential
             </Text>
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              Adjust the sliders below to see how much you could save by reducing spending in different categories.
+              Choose to reduce spending by percentage or specific amounts (daily/monthly) for each category.
             </Text>
           </View>
 
@@ -126,7 +147,7 @@ export default function SavingsCalculator() {
                 color="#fff" 
               />
               <Text style={styles.summaryLabel}>Monthly Savings</Text>
-              <Text style={styles.summaryAmount}>${totalSavings.toFixed(2)}</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(totalSavings)}</Text>
             </View>
 
             <View style={[styles.summaryCard, { backgroundColor: colors.success }]}>
@@ -137,7 +158,7 @@ export default function SavingsCalculator() {
                 color="#fff" 
               />
               <Text style={styles.summaryLabel}>Annual Savings</Text>
-              <Text style={styles.summaryAmount}>${annualSavings.toFixed(2)}</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(annualSavings)}</Text>
             </View>
           </View>
 
@@ -147,7 +168,7 @@ export default function SavingsCalculator() {
                 Current Monthly Spending
               </Text>
               <Text style={[styles.spendingAmount, { color: theme.colors.text }]}>
-                ${totalCurrentSpending.toFixed(2)}
+                {formatCurrency(totalCurrentSpending)}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -156,7 +177,7 @@ export default function SavingsCalculator() {
                 New Monthly Spending
               </Text>
               <Text style={[styles.spendingAmount, { color: colors.success, fontWeight: '700' }]}>
-                ${newMonthlySpending.toFixed(2)}
+                {formatCurrency(newMonthlySpending)}
               </Text>
             </View>
           </View>
@@ -197,54 +218,210 @@ export default function SavingsCalculator() {
                         {category.categoryName}
                       </Text>
                       <Text style={[styles.categorySpending, { color: colors.textSecondary }]}>
-                        Current: ${category.currentSpending.toFixed(2)}/month
+                        Current: {formatCurrency(category.currentSpending)}/month
                       </Text>
                     </View>
                   </View>
                   <View style={styles.savingsInfo}>
                     <Text style={[styles.savingsAmount, { color: colors.success }]}>
-                      -${((category.currentSpending * category.reductionPercentage) / 100).toFixed(2)}
+                      -{formatCurrency(calculateCategorySavings(category))}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.sliderContainer}>
-                  <View style={styles.sliderLabels}>
-                    <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>
-                      Reduce by {category.reductionPercentage}%
+                {/* Reduction Type Toggle */}
+                <View style={styles.typeToggleContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeToggleButton,
+                      styles.typeToggleButtonLeft,
+                      { borderColor: theme.dark ? colors.border : '#E0E0E0' },
+                      category.reductionType === 'percentage' && {
+                        backgroundColor: category.color,
+                        borderColor: category.color,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      updateReduction(category.categoryId, { reductionType: 'percentage' });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.typeToggleText,
+                        category.reductionType === 'percentage'
+                          ? { color: '#fff', fontWeight: '700' }
+                          : { color: theme.colors.text },
+                      ]}
+                    >
+                      Percentage
                     </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeToggleButton,
+                      styles.typeToggleButtonRight,
+                      { borderColor: theme.dark ? colors.border : '#E0E0E0' },
+                      category.reductionType === 'amount' && {
+                        backgroundColor: category.color,
+                        borderColor: category.color,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      updateReduction(category.categoryId, { reductionType: 'amount' });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.typeToggleText,
+                        category.reductionType === 'amount'
+                          ? { color: '#fff', fontWeight: '700' }
+                          : { color: theme.colors.text },
+                      ]}
+                    >
+                      Amount
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Percentage-based reduction */}
+                {category.reductionType === 'percentage' && (
+                  <View style={styles.sliderContainer}>
+                    <View style={styles.sliderLabels}>
+                      <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>
+                        Reduce by {category.reductionPercentage}%
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.percentageButtons}>
+                      {[0, 10, 25, 50, 75, 100].map((percent) => (
+                        <TouchableOpacity
+                          key={`${category.categoryId}-${percent}`}
+                          style={[
+                            styles.percentButton,
+                            { borderColor: theme.dark ? colors.border : '#E0E0E0' },
+                            category.reductionPercentage === percent && {
+                              backgroundColor: category.color,
+                              borderColor: category.color,
+                            },
+                          ]}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            updateReduction(category.categoryId, { reductionPercentage: percent });
+                          }}
+                          activeOpacity={0.7}
+                          accessibilityLabel={`Reduce ${category.categoryName} by ${percent} percent`}
+                        >
+                          <Text
+                            style={[
+                              styles.percentButtonText,
+                              category.reductionPercentage === percent
+                                ? { color: '#fff', fontWeight: '700' }
+                                : { color: theme.colors.text },
+                            ]}
+                          >
+                            {percent}%
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
-                  
-                  <View style={styles.percentageButtons}>
-                    {[0, 10, 25, 50, 75, 100].map((percent) => (
+                )}
+
+                {/* Amount-based reduction */}
+                {category.reductionType === 'amount' && (
+                  <View style={styles.amountContainer}>
+                    <View style={styles.periodToggleContainer}>
                       <TouchableOpacity
-                        key={`${category.categoryId}-${percent}`}
                         style={[
-                          styles.percentButton,
+                          styles.periodButton,
+                          styles.periodButtonLeft,
                           { borderColor: theme.dark ? colors.border : '#E0E0E0' },
-                          category.reductionPercentage === percent && {
+                          category.reductionPeriod === 'daily' && {
                             backgroundColor: category.color,
                             borderColor: category.color,
                           },
                         ]}
-                        onPress={() => updateReduction(category.categoryId, percent)}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          updateReduction(category.categoryId, { reductionPeriod: 'daily' });
+                        }}
                         activeOpacity={0.7}
-                        accessibilityLabel={`Reduce ${category.categoryName} by ${percent} percent`}
                       >
                         <Text
                           style={[
-                            styles.percentButtonText,
-                            category.reductionPercentage === percent
+                            styles.periodButtonText,
+                            category.reductionPeriod === 'daily'
                               ? { color: '#fff', fontWeight: '700' }
                               : { color: theme.colors.text },
                           ]}
                         >
-                          {percent}%
+                          Daily
                         </Text>
                       </TouchableOpacity>
-                    ))}
+                      <TouchableOpacity
+                        style={[
+                          styles.periodButton,
+                          styles.periodButtonRight,
+                          { borderColor: theme.dark ? colors.border : '#E0E0E0' },
+                          category.reductionPeriod === 'monthly' && {
+                            backgroundColor: category.color,
+                            borderColor: category.color,
+                          },
+                        ]}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          updateReduction(category.categoryId, { reductionPeriod: 'monthly' });
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.periodButtonText,
+                            category.reductionPeriod === 'monthly'
+                              ? { color: '#fff', fontWeight: '700' }
+                              : { color: theme.colors.text },
+                          ]}
+                        >
+                          Monthly
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.amountInputContainer}>
+                      <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>
+                        Reduce by ({category.reductionPeriod}):
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.amountInput,
+                          {
+                            color: theme.colors.text,
+                            backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                            borderColor: theme.dark ? colors.border : '#E0E0E0',
+                          },
+                        ]}
+                        value={category.reductionAmount > 0 ? category.reductionAmount.toString() : ''}
+                        onChangeText={(text) => {
+                          const amount = parseFloat(text) || 0;
+                          updateReduction(category.categoryId, { reductionAmount: amount });
+                        }}
+                        keyboardType="decimal-pad"
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                    </View>
+
+                    {category.reductionPeriod === 'daily' && category.reductionAmount > 0 && (
+                      <Text style={[styles.amountHint, { color: colors.textSecondary }]}>
+                        ≈ {formatCurrency(category.reductionAmount * 30)}/month
+                      </Text>
+                    )}
                   </View>
-                </View>
+                )}
               </View>
             ))
           )}
@@ -261,14 +438,14 @@ export default function SavingsCalculator() {
               <View style={styles.projectionText}>
                 <Text style={styles.projectionTitle}>💰 Savings Projection</Text>
                 <Text style={styles.projectionSubtitle}>
-                  By making these changes, you could save ${totalSavings.toFixed(2)} per month.
+                  By making these changes, you could save {formatCurrency(totalSavings)} per month.
                 </Text>
                 <Text style={styles.projectionSubtitle}>
-                  That&apos;s ${annualSavings.toFixed(2)} per year!
+                  That&apos;s {formatCurrency(annualSavings)} per year!
                 </Text>
                 {annualSavings > 1000 && (
                   <Text style={[styles.projectionSubtitle, { fontWeight: '700', marginTop: 8 }]}>
-                    🎉 You could save over $1,000 annually!
+                    🎉 You could save over {formatCurrency(1000)} annually!
                   </Text>
                 )}
               </View>
@@ -414,6 +591,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  typeToggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  typeToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  typeToggleButtonLeft: {
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderRightWidth: 0.5,
+  },
+  typeToggleButtonRight: {
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+    borderLeftWidth: 0.5,
+  },
+  typeToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   sliderContainer: {
     marginTop: 8,
   },
@@ -440,6 +641,54 @@ const styles = StyleSheet.create({
   percentButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  amountContainer: {
+    marginTop: 8,
+  },
+  periodToggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  periodButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  periodButtonLeft: {
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderRightWidth: 0.5,
+  },
+  periodButtonRight: {
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+    borderLeftWidth: 0.5,
+  },
+  periodButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  amountInputContainer: {
+    marginBottom: 8,
+  },
+  amountLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  amountInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  amountHint: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   projectionCard: {
     borderRadius: 16,

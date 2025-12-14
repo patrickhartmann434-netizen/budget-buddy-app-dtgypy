@@ -1,3 +1,4 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -5,7 +6,7 @@ import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { Alert } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -15,6 +16,8 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { ThemeProvider as CustomThemeProvider, useThemeMode } from "@/contexts/ThemeContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -23,9 +26,9 @@ export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function RootLayoutContent() {
   const networkState = useNetworkState();
+  const { isDark } = useThemeMode();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -76,14 +79,13 @@ export default function RootLayout() {
       notification: "rgb(255, 69, 58)", // System Red (Dark Mode)
     },
   };
+
   return (
     <>
-      <StatusBar style="auto" animated />
-        <ThemeProvider
-          value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
-        >
-          <WidgetProvider>
-            <GestureHandlerRootView>
+      <StatusBar style={isDark ? "light" : "dark"} animated />
+      <ThemeProvider value={isDark ? CustomDarkTheme : CustomDefaultTheme}>
+        <WidgetProvider>
+          <GestureHandlerRootView>
             <Stack>
               {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -94,6 +96,13 @@ export default function RootLayout() {
                 options={{
                   presentation: "card",
                   title: "Savings Calculator",
+                }}
+              />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  presentation: "card",
+                  title: "Settings",
                 }}
               />
 
@@ -124,9 +133,19 @@ export default function RootLayout() {
               />
             </Stack>
             <SystemBars style={"auto"} />
-            </GestureHandlerRootView>
-          </WidgetProvider>
-        </ThemeProvider>
+          </GestureHandlerRootView>
+        </WidgetProvider>
+      </ThemeProvider>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <CustomThemeProvider>
+      <SettingsProvider>
+        <RootLayoutContent />
+      </SettingsProvider>
+    </CustomThemeProvider>
   );
 }
