@@ -60,8 +60,8 @@ export default function HomeScreen() {
           <View style={styles.balanceRow}>
             <View style={styles.balanceItem}>
               <IconSymbol 
-                ios_icon_name="arrow.down.circle.fill" 
-                android_material_icon_name="arrow-downward" 
+                ios_icon_name="arrow.up.circle.fill" 
+                android_material_icon_name="arrow-upward" 
                 size={20} 
                 color="#fff" 
               />
@@ -70,8 +70,8 @@ export default function HomeScreen() {
             </View>
             <View style={styles.balanceItem}>
               <IconSymbol 
-                ios_icon_name="arrow.up.circle.fill" 
-                android_material_icon_name="arrow-upward" 
+                ios_icon_name="arrow.down.circle.fill" 
+                android_material_icon_name="arrow-downward" 
                 size={20} 
                 color="#fff" 
               />
@@ -84,13 +84,7 @@ export default function HomeScreen() {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Budget Overview */}
-        <BudgetOverview budgets={budgets} />
-
-        {/* Recent Transactions */}
-        <RecentTransactions transactions={transactions.slice(0, 5)} />
-
-        {/* Savings Calculator CTA */}
+        {/* Savings Calculator CTA - Moved up */}
         <TouchableOpacity 
           style={[styles.savingsCard, { backgroundColor: colors.success }]}
           onPress={() => router.push('/savings-calculator')}
@@ -119,6 +113,12 @@ export default function HomeScreen() {
             />
           </View>
         </TouchableOpacity>
+
+        {/* Budget Overview */}
+        <BudgetOverview budgets={budgets} />
+
+        {/* Recent Transactions */}
+        <RecentTransactions transactions={transactions.slice(0, 5)} />
 
         {/* Bottom padding for tab bar */}
         <View style={{ height: 100 }} />
@@ -196,8 +196,7 @@ const styles = StyleSheet.create({
   savingsCard: {
     borderRadius: 16,
     padding: 20,
-    marginTop: 16,
-    marginBottom: 16,
+    marginBottom: 24,
     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
     elevation: 4,
   },

@@ -38,22 +38,22 @@ export function QuickActions() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    console.log('View reports pressed - navigating to savings calculator');
-    router.push('/savings-calculator');
+    console.log('View reports pressed - navigating to spending charts');
+    router.push('/spending-charts');
   };
 
   const actions = [
     {
       title: 'Add Income',
-      icon: 'arrow.down.circle.fill' as const,
-      androidIcon: 'arrow-downward' as const,
+      icon: 'arrow.up.circle.fill' as const,
+      androidIcon: 'arrow-upward' as const,
       color: colors.success,
       onPress: handleAddIncome,
     },
     {
       title: 'Add Expense',
-      icon: 'arrow.up.circle.fill' as const,
-      androidIcon: 'arrow-upward' as const,
+      icon: 'arrow.down.circle.fill' as const,
+      androidIcon: 'arrow-downward' as const,
       color: colors.error,
       onPress: handleAddExpense,
     },
