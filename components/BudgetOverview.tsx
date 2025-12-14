@@ -22,12 +22,15 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
       <Text style={[styles.title, { color: theme.colors.text }]}>Budget Overview</Text>
       {budgets.map((budget, index) => {
         const category = defaultCategories.find(c => c.name === budget.category);
-        const percentage = (budget.spent / budget.limit) * 100;
+        const percentage = budget.limit > 0 ? (budget.spent / budget.limit) * 100 : 0;
         const isOverBudget = percentage > 100;
         const isWarning = percentage > 80 && percentage <= 100;
 
         return (
-          <View key={index} style={[styles.budgetCard, { backgroundColor: theme.colors.card }]}>
+          <View 
+            key={budget.id || index} 
+            style={[styles.budgetCard, { backgroundColor: theme.colors.card }]}
+          >
             <View style={styles.budgetHeader}>
               <View style={styles.budgetInfo}>
                 <View style={[styles.categoryDot, { backgroundColor: category?.color || colors.primary }]} />
@@ -41,7 +44,7 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
             </View>
             
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBarBackground, { backgroundColor: colors.border }]}>
+              <View style={[styles.progressBarBackground, { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : colors.border }]}>
                 <View
                   style={[
                     styles.progressBarFill,
@@ -74,7 +77,12 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
 
             {isOverBudget && (
               <Text style={[styles.warningText, { color: colors.error }]}>
-                Over budget by ${(budget.spent - budget.limit).toFixed(2)}
+                ⚠️ Over budget by ${(budget.spent - budget.limit).toFixed(2)}
+              </Text>
+            )}
+            {isWarning && !isOverBudget && (
+              <Text style={[styles.warningText, { color: colors.warning }]}>
+                ⚡ Approaching budget limit
               </Text>
             )}
           </View>
@@ -109,6 +117,7 @@ const styles = StyleSheet.create({
   budgetInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   categoryDot: {
     width: 10,

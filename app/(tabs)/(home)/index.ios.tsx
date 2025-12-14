@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Stack } from "expo-router";
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -13,8 +13,47 @@ import { QuickActions } from "@/components/QuickActions";
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { totalIncome, totalExpenses, budgets, transactions } = useBudgetData();
+  const { totalIncome, totalExpenses, budgets, transactions, isLoading, error } = useBudgetData();
   const balance = totalIncome - totalExpenses;
+
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: "BudgetBuddy",
+            headerLargeTitle: true,
+          }}
+        />
+        <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading your budget...</Text>
+        </View>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: "BudgetBuddy",
+            headerLargeTitle: true,
+          }}
+        />
+        <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle.fill" 
+            android_material_icon_name="error" 
+            size={48} 
+            color={colors.error} 
+          />
+          <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -72,6 +111,8 @@ export default function HomeScreen() {
             style={[styles.savingsCard, { backgroundColor: colors.success }]}
             onPress={() => router.push('/savings-calculator')}
             activeOpacity={0.8}
+            accessibilityLabel="Open Savings Calculator"
+            accessibilityHint="Calculate how much you can save by reducing spending"
           >
             <View style={styles.savingsCardContent}>
               <IconSymbol 
@@ -106,6 +147,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   scrollView: {
     flex: 1,
@@ -178,5 +224,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     color: 'rgba(255, 255, 255, 0.9)',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

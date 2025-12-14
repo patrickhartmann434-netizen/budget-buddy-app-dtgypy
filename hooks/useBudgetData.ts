@@ -1,10 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Transaction, Budget } from '@/types/budget';
-import { defaultCategories } from '@/data/categories';
 
-// Sample data for demonstration
-const sampleTransactions: Transaction[] = [
+const STORAGE_KEYS = {
+  TRANSACTIONS: '@budgetbuddy_transactions',
+  BUDGETS: '@budgetbuddy_budgets',
+};
+
+// Sample data for first-time users
+const initialTransactions: Transaction[] = [
   {
     id: '1',
     amount: 3500,
@@ -87,7 +92,7 @@ const sampleTransactions: Transaction[] = [
   },
 ];
 
-const sampleBudgets: Budget[] = [
+const initialBudgets: Budget[] = [
   {
     id: '1',
     category: 'Food & Dining',
@@ -119,8 +124,71 @@ const sampleBudgets: Budget[] = [
 ];
 
 export function useBudgetData() {
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
-  const [budgets, setBudgets] = useState<Budget[]>(sampleBudgets);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load data from AsyncStorage on mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [transactionsData, budgetsData] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.TRANSACTIONS),
+        AsyncStorage.getItem(STORAGE_KEYS.BUDGETS),
+      ]);
+
+      if (transactionsData) {
+        setTransactions(JSON.parse(transactionsData));
+      } else {
+        // First time user - set initial data
+        setTransactions(initialTransactions);
+        await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(initialTransactions));
+      }
+
+      if (budgetsData) {
+        setBudgets(JSON.parse(budgetsData));
+      } else {
+        // First time user - set initial data
+        setBudgets(initialBudgets);
+        await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(initialBudgets));
+      }
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load data');
+      // Fallback to initial data
+      setTransactions(initialTransactions);
+      setBudgets(initialBudgets);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveTransactions = async (newTransactions: Transaction[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(newTransactions));
+      setTransactions(newTransactions);
+    } catch (err) {
+      console.error('Error saving transactions:', err);
+      setError('Failed to save transaction');
+    }
+  };
+
+  const saveBudgets = async (newBudgets: Budget[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(newBudgets));
+      setBudgets(newBudgets);
+    } catch (err) {
+      console.error('Error saving budgets:', err);
+      setError('Failed to save budget');
+    }
+  };
 
   const totalIncome = transactions
     .filter(t => t.type === 'income')
@@ -130,37 +198,56 @@ export function useBudgetData() {
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
       ...transaction,
       id: Date.now().toString(),
     };
-    setTransactions(prev => [newTransaction, ...prev]);
-  };
+    const newTransactions = [newTransaction, ...transactions];
+    await saveTransactions(newTransactions);
+  }, [transactions]);
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  };
+  const deleteTransaction = useCallback(async (id: string) => {
+    const newTransactions = transactions.filter(t => t.id !== id);
+    await saveTransactions(newTransactions);
+  }, [transactions]);
 
-  const updateBudget = (budget: Budget) => {
-    setBudgets(prev => {
-      const index = prev.findIndex(b => b.id === budget.id);
-      if (index >= 0) {
-        const newBudgets = [...prev];
-        newBudgets[index] = budget;
-        return newBudgets;
-      }
-      return [...prev, budget];
-    });
-  };
+  const updateBudget = useCallback(async (budget: Budget) => {
+    const index = budgets.findIndex(b => b.id === budget.id);
+    let newBudgets: Budget[];
+    
+    if (index >= 0) {
+      newBudgets = [...budgets];
+      newBudgets[index] = budget;
+    } else {
+      newBudgets = [...budgets, budget];
+    }
+    
+    await saveBudgets(newBudgets);
+  }, [budgets]);
+
+  const clearAllData = useCallback(async () => {
+    try {
+      await AsyncStorage.multiRemove([STORAGE_KEYS.TRANSACTIONS, STORAGE_KEYS.BUDGETS]);
+      setTransactions([]);
+      setBudgets([]);
+    } catch (err) {
+      console.error('Error clearing data:', err);
+      setError('Failed to clear data');
+    }
+  }, []);
 
   return {
     transactions,
     budgets,
     totalIncome,
     totalExpenses,
+    isLoading,
+    error,
     addTransaction,
     deleteTransaction,
     updateBudget,
+    clearAllData,
+    refreshData: loadData,
   };
 }

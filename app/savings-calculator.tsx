@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
-import { Stack, router } from "expo-router";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
+import { Stack } from "expo-router";
 import { useTheme } from "@react-navigation/native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
@@ -18,27 +18,34 @@ interface CategoryReduction {
 
 export default function SavingsCalculator() {
   const theme = useTheme();
-  const { transactions } = useBudgetData();
+  const { transactions, isLoading } = useBudgetData();
   
-  // Calculate spending by category
-  const categorySpending = defaultCategories
-    .filter(cat => cat.type === 'expense')
-    .map(category => {
-      const spent = transactions
-        .filter(t => t.type === 'expense' && t.category === category.name)
-        .reduce((sum, t) => sum + t.amount, 0);
-      return {
-        categoryId: category.id,
-        categoryName: category.name,
-        currentSpending: spent,
-        reductionPercentage: 0,
-        color: category.color,
-      };
-    })
-    .filter(cat => cat.currentSpending > 0)
-    .sort((a, b) => b.currentSpending - a.currentSpending);
+  // Calculate spending by category with memoization
+  const categorySpending = useMemo(() => {
+    return defaultCategories
+      .filter(cat => cat.type === 'expense')
+      .map(category => {
+        const spent = transactions
+          .filter(t => t.type === 'expense' && t.category === category.name)
+          .reduce((sum, t) => sum + t.amount, 0);
+        return {
+          categoryId: category.id,
+          categoryName: category.name,
+          currentSpending: spent,
+          reductionPercentage: 0,
+          color: category.color,
+        };
+      })
+      .filter(cat => cat.currentSpending > 0)
+      .sort((a, b) => b.currentSpending - a.currentSpending);
+  }, [transactions]);
 
   const [reductions, setReductions] = useState<CategoryReduction[]>(categorySpending);
+
+  // Update reductions when categorySpending changes
+  React.useEffect(() => {
+    setReductions(categorySpending);
+  }, [categorySpending]);
 
   const updateReduction = (categoryId: string, percentage: number) => {
     setReductions(prev =>
@@ -58,6 +65,26 @@ export default function SavingsCalculator() {
   const newMonthlySpending = totalCurrentSpending - totalSavings;
   const annualSavings = totalSavings * 12;
 
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: "Savings Calculator",
+            headerBackTitle: "Back",
+            presentation: "card",
+          }}
+        />
+        <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.text }]}>
+            Calculating your savings potential...
+          </Text>
+        </View>
+      </>
+    );
+  }
+
   return (
     <>
       <Stack.Screen
@@ -75,6 +102,12 @@ export default function SavingsCalculator() {
         >
           {/* Header Info */}
           <View style={[styles.infoCard, { backgroundColor: theme.colors.card }]}>
+            <IconSymbol 
+              ios_icon_name="lightbulb.fill" 
+              android_material_icon_name="lightbulb" 
+              size={32} 
+              color={colors.accent} 
+            />
             <Text style={[styles.infoTitle, { color: theme.colors.text }]}>
               Discover Your Savings Potential
             </Text>
@@ -117,11 +150,12 @@ export default function SavingsCalculator() {
                 ${totalCurrentSpending.toFixed(2)}
               </Text>
             </View>
+            <View style={styles.divider} />
             <View style={styles.spendingRow}>
               <Text style={[styles.spendingLabel, { color: colors.textSecondary }]}>
                 New Monthly Spending
               </Text>
-              <Text style={[styles.spendingAmount, { color: colors.success }]}>
+              <Text style={[styles.spendingAmount, { color: colors.success, fontWeight: '700' }]}>
                 ${newMonthlySpending.toFixed(2)}
               </Text>
             </View>
@@ -150,7 +184,7 @@ export default function SavingsCalculator() {
           ) : (
             reductions.map((category, index) => (
               <View 
-                key={index}
+                key={category.categoryId}
                 style={[styles.categoryCard, { backgroundColor: theme.colors.card }]}
               >
                 <View style={styles.categoryHeader}>
@@ -182,22 +216,26 @@ export default function SavingsCalculator() {
                   </View>
                   
                   <View style={styles.percentageButtons}>
-                    {[0, 10, 25, 50, 75, 100].map((percent, idx) => (
+                    {[0, 10, 25, 50, 75, 100].map((percent) => (
                       <TouchableOpacity
-                        key={idx}
+                        key={`${category.categoryId}-${percent}`}
                         style={[
                           styles.percentButton,
+                          { borderColor: theme.dark ? colors.border : '#E0E0E0' },
                           category.reductionPercentage === percent && {
                             backgroundColor: category.color,
+                            borderColor: category.color,
                           },
                         ]}
                         onPress={() => updateReduction(category.categoryId, percent)}
+                        activeOpacity={0.7}
+                        accessibilityLabel={`Reduce ${category.categoryName} by ${percent} percent`}
                       >
                         <Text
                           style={[
                             styles.percentButtonText,
                             category.reductionPercentage === percent
-                              ? { color: '#fff' }
+                              ? { color: '#fff', fontWeight: '700' }
                               : { color: theme.colors.text },
                           ]}
                         >
@@ -215,19 +253,24 @@ export default function SavingsCalculator() {
           {totalSavings > 0 && (
             <View style={[styles.projectionCard, { backgroundColor: colors.accent }]}>
               <IconSymbol 
-                ios_icon_name="lightbulb.fill" 
-                android_material_icon_name="lightbulb" 
+                ios_icon_name="star.fill" 
+                android_material_icon_name="star" 
                 size={32} 
                 color="#fff" 
               />
               <View style={styles.projectionText}>
-                <Text style={styles.projectionTitle}>Savings Projection</Text>
+                <Text style={styles.projectionTitle}>💰 Savings Projection</Text>
                 <Text style={styles.projectionSubtitle}>
                   By making these changes, you could save ${totalSavings.toFixed(2)} per month.
                 </Text>
                 <Text style={styles.projectionSubtitle}>
                   That&apos;s ${annualSavings.toFixed(2)} per year!
                 </Text>
+                {annualSavings > 1000 && (
+                  <Text style={[styles.projectionSubtitle, { fontWeight: '700', marginTop: 8 }]}>
+                    🎉 You could save over $1,000 annually!
+                  </Text>
+                )}
               </View>
             </View>
           )}
@@ -244,6 +287,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   scrollView: {
     flex: 1,
   },
@@ -256,15 +304,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
     elevation: 2,
+    alignItems: 'center',
   },
   infoTitle: {
     fontSize: 20,
     fontWeight: '700',
+    marginTop: 12,
     marginBottom: 8,
+    textAlign: 'center',
   },
   infoText: {
     fontSize: 14,
     lineHeight: 20,
+    textAlign: 'center',
   },
   summaryContainer: {
     flexDirection: 'row',
@@ -285,6 +337,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 8,
     marginBottom: 4,
+    textAlign: 'center',
   },
   summaryAmount: {
     fontSize: 24,
@@ -310,7 +363,12 @@ const styles = StyleSheet.create({
   },
   spendingAmount: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 4,
   },
   sectionTitle: {
     fontSize: 22,
@@ -376,7 +434,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.border,
     minWidth: 60,
     alignItems: 'center',
   },
@@ -424,5 +481,10 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

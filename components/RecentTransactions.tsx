@@ -15,21 +15,41 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const theme = useTheme();
 
   if (transactions.length === 0) {
-    return null;
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Recent Transactions</Text>
+        <View style={[styles.emptyCard, { backgroundColor: theme.colors.card }]}>
+          <IconSymbol 
+            ios_icon_name="tray" 
+            android_material_icon_name="inbox" 
+            size={40} 
+            color={colors.textSecondary} 
+          />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            No transactions yet
+          </Text>
+        </View>
+      </View>
+    );
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    try {
+      const date = new Date(dateString);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown';
     }
   };
 
@@ -42,9 +62,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
 
         return (
           <TouchableOpacity
-            key={index}
+            key={transaction.id || index}
             style={[styles.transactionCard, { backgroundColor: theme.colors.card }]}
             activeOpacity={0.7}
+            accessibilityLabel={`${transaction.description}, ${isIncome ? 'income' : 'expense'} of ${transaction.amount} dollars`}
           >
             <View style={styles.transactionLeft}>
               <View
@@ -130,5 +151,17 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  emptyCard: {
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 12,
   },
 });
