@@ -5,8 +5,8 @@ export default function TabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger key="home" name="(home)">
-        <Icon sf="house.fill" />
-        <Label>Home</Label>
+        <Icon sf="chart.bar.fill" />
+        <Label>Dashboard</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger key="profile" name="profile">
         <Icon sf="person.fill" />

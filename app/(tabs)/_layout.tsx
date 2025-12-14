@@ -8,8 +8,8 @@ export default function TabLayout() {
     {
       name: '(home)',
       route: '/(tabs)/(home)/',
-      icon: 'home',
-      label: 'Home',
+      icon: 'account-balance-wallet',
+      label: 'Dashboard',
     },
     {
       name: 'profile',

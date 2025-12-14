@@ -88,6 +88,15 @@ export default function RootLayout() {
               {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
+              {/* Budget App Screens */}
+              <Stack.Screen
+                name="savings-calculator"
+                options={{
+                  presentation: "card",
+                  title: "Savings Calculator",
+                }}
+              />
+
               {/* Modal Demo Screens */}
               <Stack.Screen
                 name="modal"

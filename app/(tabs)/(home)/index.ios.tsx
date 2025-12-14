@@ -1,32 +1,103 @@
+
 import React from "react";
 import { Stack } from "expo-router";
-import { FlatList, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { modalDemos } from "@/components/homeData";
-import { DemoCard } from "@/components/DemoCard";
-import { HeaderRightButton, HeaderLeftButton } from "@/components/HeaderButtons";
+import { router } from "expo-router";
+import { IconSymbol } from "@/components/IconSymbol";
+import { colors } from "@/styles/commonStyles";
+import { useBudgetData } from "@/hooks/useBudgetData";
+import { BudgetOverview } from "@/components/BudgetOverview";
+import { RecentTransactions } from "@/components/RecentTransactions";
+import { QuickActions } from "@/components/QuickActions";
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const { totalIncome, totalExpenses, budgets, transactions } = useBudgetData();
+  const balance = totalIncome - totalExpenses;
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: "Building the app...",
-          headerRight: () => <HeaderRightButton />,
-          headerLeft: () => <HeaderLeftButton />,
+          title: "BudgetBuddy",
+          headerLargeTitle: true,
         }}
       />
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <FlatList
-          data={modalDemos}
-          renderItem={({ item }) => <DemoCard item={item} />}
-          keyExtractor={(item) => item.route}
-          contentContainerStyle={styles.listContainer}
-          contentInsetAdjustmentBehavior="automatic"
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        />
+        >
+          {/* Balance Card */}
+          <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
+            <Text style={styles.balanceLabel}>Current Balance</Text>
+            <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+            <View style={styles.balanceRow}>
+              <View style={styles.balanceItem}>
+                <IconSymbol 
+                  ios_icon_name="arrow.down.circle.fill" 
+                  android_material_icon_name="arrow-downward" 
+                  size={20} 
+                  color="#fff" 
+                />
+                <Text style={styles.balanceItemLabel}>Income</Text>
+                <Text style={styles.balanceItemAmount}>${totalIncome.toFixed(2)}</Text>
+              </View>
+              <View style={styles.balanceItem}>
+                <IconSymbol 
+                  ios_icon_name="arrow.up.circle.fill" 
+                  android_material_icon_name="arrow-upward" 
+                  size={20} 
+                  color="#fff" 
+                />
+                <Text style={styles.balanceItemLabel}>Expenses</Text>
+                <Text style={styles.balanceItemAmount}>${totalExpenses.toFixed(2)}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Actions */}
+          <QuickActions />
+
+          {/* Budget Overview */}
+          <BudgetOverview budgets={budgets} />
+
+          {/* Recent Transactions */}
+          <RecentTransactions transactions={transactions.slice(0, 5)} />
+
+          {/* Savings Calculator CTA */}
+          <TouchableOpacity 
+            style={[styles.savingsCard, { backgroundColor: colors.success }]}
+            onPress={() => router.push('/savings-calculator')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.savingsCardContent}>
+              <IconSymbol 
+                ios_icon_name="chart.line.uptrend.xyaxis" 
+                android_material_icon_name="trending-up" 
+                size={32} 
+                color="#fff" 
+              />
+              <View style={styles.savingsCardText}>
+                <Text style={styles.savingsCardTitle}>Savings Calculator</Text>
+                <Text style={styles.savingsCardSubtitle}>
+                  See how much you can save by cutting back
+                </Text>
+              </View>
+              <IconSymbol 
+                ios_icon_name="chevron.right" 
+                android_material_icon_name="chevron-right" 
+                size={24} 
+                color="#fff" 
+              />
+            </View>
+          </TouchableOpacity>
+
+          {/* Bottom padding */}
+          <View style={{ height: 20 }} />
+        </ScrollView>
       </View>
     </>
   );
@@ -36,8 +107,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContainer: {
-    paddingVertical: 16,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  balanceCard: {
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  balanceItem: {
+    alignItems: 'center',
+  },
+  balanceItemLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+  },
+  balanceItemAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 2,
+  },
+  savingsCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 16,
+    marginBottom: 16,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
+  savingsCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  savingsCardText: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  savingsCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  savingsCardSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
 });
