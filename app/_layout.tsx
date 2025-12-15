@@ -28,13 +28,20 @@ export const unstable_settings = {
 function RootLayoutNav() {
   const networkState = useNetworkState();
   const { isDark } = useThemeMode();
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
+    if (error) {
+      console.error('Font loading error:', error);
+    }
+  }, [error]);
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      console.log('App loaded successfully');
     }
   }, [loaded]);
 
@@ -43,6 +50,7 @@ function RootLayoutNav() {
       !networkState.isConnected &&
       networkState.isInternetReachable === false
     ) {
+      console.log('App is offline');
       Alert.alert(
         "🔌 You are offline",
         "You can keep using the app! Your changes will be saved locally and synced when you are back online."
@@ -85,13 +93,14 @@ function RootLayoutNav() {
       <ThemeProvider value={isDark ? CustomDarkTheme : CustomDefaultTheme}>
         <WidgetProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
-            <Stack>
+            <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
               <Stack.Screen
                 name="savings-calculator"
                 options={{
                   presentation: "card",
+                  headerShown: true,
                   title: "Savings Calculator",
                 }}
               />
@@ -99,6 +108,7 @@ function RootLayoutNav() {
                 name="settings"
                 options={{
                   presentation: "card",
+                  headerShown: true,
                   title: "Settings",
                 }}
               />
@@ -106,6 +116,7 @@ function RootLayoutNav() {
                 name="spending-charts"
                 options={{
                   presentation: "card",
+                  headerShown: true,
                   title: "Spending Charts",
                 }}
               />
@@ -113,6 +124,7 @@ function RootLayoutNav() {
                 name="budget-projection"
                 options={{
                   presentation: "card",
+                  headerShown: true,
                   title: "Budget Projection",
                 }}
               />
@@ -120,6 +132,7 @@ function RootLayoutNav() {
                 name="bank-connect"
                 options={{
                   presentation: "card",
+                  headerShown: true,
                   title: "Connect Bank",
                 }}
               />
@@ -159,6 +172,7 @@ function RootLayoutNav() {
                 name="modal"
                 options={{
                   presentation: "modal",
+                  headerShown: true,
                   title: "Standard Modal",
                 }}
               />
@@ -166,6 +180,7 @@ function RootLayoutNav() {
                 name="formsheet"
                 options={{
                   presentation: "formSheet",
+                  headerShown: true,
                   title: "Form Sheet Modal",
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: [0.5, 0.8, 1.0],

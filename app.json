@@ -1,8 +1,8 @@
 
 {
   "expo": {
-    "name": "Budget Buddy",
-    "slug": "Budget Buddy",
+    "name": "BudgetBuddy",
+    "slug": "budgetbuddy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/final_quest_240x240.png",
@@ -55,6 +55,5 @@
         "origin": false
       }
     }
-  },
-  "scheme": "Budget Buddy"
+  }
 }

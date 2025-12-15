@@ -56,13 +56,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     ? systemColorScheme === 'dark' 
     : themeMode === 'dark';
 
-  // Show nothing while loading to prevent flash
-  if (isLoading) {
-    return null;
-  }
+  // Don't block rendering - just use default theme while loading
+  const value = {
+    themeMode,
+    isDark,
+    setThemeMode,
+  };
 
   return (
-    <ThemeContext.Provider value={{ themeMode, isDark, setThemeMode }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

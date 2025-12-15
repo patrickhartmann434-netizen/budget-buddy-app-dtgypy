@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Platform, KeyboardAvoidingView, SafeAreaView } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@react-navigation/native';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -19,7 +19,9 @@ export default function AddIncomeModal() {
 
   const incomeCategories = defaultCategories.filter(cat => cat.type === 'income');
 
-  const backgroundColor = theme.dark ? 'rgb(28, 28, 30)' : 'rgb(242, 242, 247)';
+  const backgroundColor = theme.dark ? '#1C1C1E' : '#F2F2F7';
+  const cardColor = theme.dark ? '#2C2C2E' : '#FFFFFF';
+  const textColor = theme.dark ? '#FFFFFF' : '#000000';
 
   const handleSubmit = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -68,11 +70,11 @@ export default function AddIncomeModal() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
           <TouchableOpacity 
@@ -84,120 +86,125 @@ export default function AddIncomeModal() {
               ios_icon_name="xmark.circle.fill" 
               android_material_icon_name="close" 
               size={28} 
-              color={theme.colors.text} 
+              color={textColor} 
             />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Add Income</Text>
+          <Text style={[styles.title, { color: textColor }]}>Add Income</Text>
           <View style={{ width: 28 }} />
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Amount</Text>
-            <View style={[styles.amountInputContainer, { backgroundColor: theme.colors.card }]}>
-              <Text style={[styles.currencySymbol, { color: theme.colors.text }]}>$</Text>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: textColor }]}>Amount</Text>
+              <View style={[styles.amountInputContainer, { backgroundColor: cardColor }]}>
+                <Text style={[styles.currencySymbol, { color: textColor }]}>$</Text>
+                <TextInput
+                  style={[styles.amountInput, { color: textColor }]}
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="decimal-pad"
+                  autoFocus
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: textColor }]}>Description</Text>
               <TextInput
-                style={[styles.amountInput, { color: theme.colors.text }]}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0.00"
+                style={[styles.input, { backgroundColor: cardColor, color: textColor }]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="e.g., Monthly salary, Freelance project"
                 placeholderTextColor={colors.textSecondary}
-                keyboardType="decimal-pad"
-                autoFocus
+                multiline
               />
             </View>
-          </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Description</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.colors.card, color: theme.colors.text }]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="e.g., Monthly salary, Freelance project"
-              placeholderTextColor={colors.textSecondary}
-              multiline
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Category</Text>
-            <View style={styles.categoriesGrid}>
-              {incomeCategories.map((category, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.categoryCard,
-                    { backgroundColor: theme.colors.card },
-                    selectedCategory === category.name && { 
-                      backgroundColor: colors.success,
-                      borderWidth: 2,
-                      borderColor: colors.success,
-                    }
-                  ]}
-                  onPress={() => {
-                    setSelectedCategory(category.name);
-                    if (Platform.OS !== 'web') {
-                      Haptics.selectionAsync();
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol 
-                    ios_icon_name="dollarsign.circle.fill" 
-                    android_material_icon_name={category.icon} 
-                    size={24} 
-                    color={selectedCategory === category.name ? '#fff' : category.color} 
-                  />
-                  <Text 
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: textColor }]}>Category</Text>
+              <View style={styles.categoriesGrid}>
+                {incomeCategories.map((category, index) => (
+                  <TouchableOpacity
+                    key={index}
                     style={[
-                      styles.categoryName, 
-                      { color: selectedCategory === category.name ? '#fff' : theme.colors.text }
+                      styles.categoryCard,
+                      { backgroundColor: cardColor },
+                      selectedCategory === category.name && { 
+                        backgroundColor: colors.success,
+                        borderWidth: 2,
+                        borderColor: colors.success,
+                      }
                     ]}
+                    onPress={() => {
+                      setSelectedCategory(category.name);
+                      if (Platform.OS !== 'web') {
+                        Haptics.selectionAsync();
+                      }
+                    }}
+                    activeOpacity={0.7}
                   >
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <IconSymbol 
+                      ios_icon_name="dollarsign.circle.fill" 
+                      android_material_icon_name={category.icon} 
+                      size={24} 
+                      color={selectedCategory === category.name ? '#fff' : category.color} 
+                    />
+                    <Text 
+                      style={[
+                        styles.categoryName, 
+                        { color: selectedCategory === category.name ? '#fff' : textColor }
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              { backgroundColor: colors.success },
-              isSubmitting && styles.submitButtonDisabled
-            ]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? 'Adding...' : 'Add Income'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                { backgroundColor: colors.success },
+                isSubmitting && styles.submitButtonDisabled
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? 'Adding...' : 'Add Income'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   closeButton: {
     padding: 4,
@@ -205,6 +212,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
   form: {
     gap: 24,
@@ -262,7 +276,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 40,
   },
   submitButtonDisabled: {
     opacity: 0.6,

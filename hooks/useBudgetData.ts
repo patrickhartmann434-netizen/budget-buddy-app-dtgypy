@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Transaction, Budget } from '@/types/budget';
 
@@ -136,7 +136,9 @@ export function useBudgetData() {
 
   // Recalculate budget spent amounts when transactions change
   useEffect(() => {
-    updateBudgetSpentAmounts();
+    if (transactions.length > 0 && budgets.length > 0) {
+      updateBudgetSpentAmounts();
+    }
   }, [transactions]);
 
   const loadData = async () => {
@@ -150,19 +152,25 @@ export function useBudgetData() {
       ]);
 
       if (transactionsData) {
-        setTransactions(JSON.parse(transactionsData));
+        const parsedTransactions = JSON.parse(transactionsData);
+        setTransactions(parsedTransactions);
+        console.log('Loaded transactions:', parsedTransactions.length);
       } else {
         // First time user - set initial data
         setTransactions(initialTransactions);
         await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(initialTransactions));
+        console.log('Initialized with sample transactions');
       }
 
       if (budgetsData) {
-        setBudgets(JSON.parse(budgetsData));
+        const parsedBudgets = JSON.parse(budgetsData);
+        setBudgets(parsedBudgets);
+        console.log('Loaded budgets:', parsedBudgets.length);
       } else {
         // First time user - set initial data
         setBudgets(initialBudgets);
         await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(initialBudgets));
+        console.log('Initialized with sample budgets');
       }
     } catch (err) {
       console.error('Error loading data:', err);
@@ -176,7 +184,10 @@ export function useBudgetData() {
   };
 
   const updateBudgetSpentAmounts = async () => {
-    if (budgets.length === 0) return;
+    if (budgets.length === 0) {
+      console.log('No budgets to update');
+      return;
+    }
 
     const updatedBudgets = budgets.map(budget => {
       const spent = transactions
@@ -189,6 +200,7 @@ export function useBudgetData() {
     setBudgets(updatedBudgets);
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(updatedBudgets));
+      console.log('Updated budget spent amounts');
     } catch (err) {
       console.error('Error updating budget spent amounts:', err);
     }
@@ -198,9 +210,11 @@ export function useBudgetData() {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(newTransactions));
       setTransactions(newTransactions);
+      console.log('Saved transactions:', newTransactions.length);
     } catch (err) {
       console.error('Error saving transactions:', err);
       setError('Failed to save transaction');
+      throw err;
     }
   };
 
@@ -208,19 +222,26 @@ export function useBudgetData() {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(newBudgets));
       setBudgets(newBudgets);
+      console.log('Saved budgets:', newBudgets.length);
     } catch (err) {
       console.error('Error saving budgets:', err);
       setError('Failed to save budget');
+      throw err;
     }
   };
 
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Memoized calculations for better performance
+  const totalIncome = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
 
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
 
   const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
@@ -229,11 +250,13 @@ export function useBudgetData() {
     };
     const newTransactions = [newTransaction, ...transactions];
     await saveTransactions(newTransactions);
+    console.log('Added transaction:', newTransaction.type, newTransaction.amount);
   }, [transactions]);
 
   const deleteTransaction = useCallback(async (id: string) => {
     const newTransactions = transactions.filter(t => t.id !== id);
     await saveTransactions(newTransactions);
+    console.log('Deleted transaction:', id);
   }, [transactions]);
 
   const updateBudget = useCallback(async (budget: Budget) => {
@@ -243,8 +266,10 @@ export function useBudgetData() {
     if (index >= 0) {
       newBudgets = [...budgets];
       newBudgets[index] = budget;
+      console.log('Updated existing budget:', budget.category);
     } else {
       newBudgets = [...budgets, budget];
+      console.log('Added new budget:', budget.category);
     }
     
     await saveBudgets(newBudgets);
@@ -255,9 +280,11 @@ export function useBudgetData() {
       await AsyncStorage.multiRemove([STORAGE_KEYS.TRANSACTIONS, STORAGE_KEYS.BUDGETS]);
       setTransactions([]);
       setBudgets([]);
+      console.log('Cleared all data');
     } catch (err) {
       console.error('Error clearing data:', err);
       setError('Failed to clear data');
+      throw err;
     }
   }, []);
 
