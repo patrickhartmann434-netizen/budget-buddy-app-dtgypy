@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Budget Buddy",
@@ -52,9 +53,6 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "your-project-id"
       }
     }
   },
