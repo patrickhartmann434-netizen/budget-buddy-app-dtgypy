@@ -1,11 +1,14 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Transaction } from '@/types/budget';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { defaultCategories } from '@/data/categories';
+import { useBudgetData } from '@/hooks/useBudgetData';
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -13,6 +16,31 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const theme = useTheme();
+  const { deleteTransaction } = useBudgetData();
+
+  const handleDelete = (transaction: Transaction) => {
+    Alert.alert(
+      'Delete Transaction',
+      `Are you sure you want to delete "${transaction.description}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (Platform.OS !== 'web') {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+            await deleteTransaction(transaction.id);
+            console.log('Transaction deleted:', transaction.id);
+          },
+        },
+      ]
+    );
+  };
 
   if (transactions.length === 0) {
     return (
@@ -61,44 +89,59 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         const isIncome = transaction.type === 'income';
 
         return (
-          <TouchableOpacity
+          <View
             key={transaction.id || index}
             style={[styles.transactionCard, { backgroundColor: theme.colors.card }]}
-            activeOpacity={0.7}
-            accessibilityLabel={`${transaction.description}, ${isIncome ? 'income' : 'expense'} of ${transaction.amount} dollars`}
           >
-            <View style={styles.transactionLeft}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  { backgroundColor: category?.color || colors.primary },
-                ]}
-              >
-                <IconSymbol
-                  ios_icon_name={isIncome ? 'arrow.down.circle.fill' : 'arrow.up.circle.fill'}
-                  android_material_icon_name={isIncome ? 'arrow-downward' : 'arrow-upward'}
-                  size={20}
-                  color="#fff"
-                />
+            <View style={styles.transactionContent}>
+              <View style={styles.transactionLeft}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: category?.color || colors.primary },
+                  ]}
+                >
+                  <IconSymbol
+                    ios_icon_name={isIncome ? 'arrow.up.circle.fill' : 'arrow.down.circle.fill'}
+                    android_material_icon_name={isIncome ? 'arrow-upward' : 'arrow-downward'}
+                    size={20}
+                    color="#fff"
+                  />
+                </View>
+                <View style={styles.transactionInfo}>
+                  <Text style={[styles.transactionDescription, { color: theme.colors.text }]}>
+                    {transaction.description}
+                  </Text>
+                  <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>
+                    {transaction.category} • {formatDate(transaction.date)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.transactionInfo}>
-                <Text style={[styles.transactionDescription, { color: theme.colors.text }]}>
-                  {transaction.description}
-                </Text>
-                <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>
-                  {transaction.category} • {formatDate(transaction.date)}
+              <View style={styles.transactionRight}>
+                <Text
+                  style={[
+                    styles.transactionAmount,
+                    { color: isIncome ? colors.success : colors.error },
+                  ]}
+                >
+                  {isIncome ? '+' : '-'}${transaction.amount.toFixed(2)}
                 </Text>
               </View>
             </View>
-            <Text
-              style={[
-                styles.transactionAmount,
-                { color: isIncome ? colors.success : colors.error },
-              ]}
+            <TouchableOpacity
+              style={[styles.deleteButton, { backgroundColor: colors.error }]}
+              onPress={() => handleDelete(transaction)}
+              activeOpacity={0.7}
+              accessibilityLabel="Delete transaction"
             >
-              {isIncome ? '+' : '-'}${transaction.amount.toFixed(2)}
-            </Text>
-          </TouchableOpacity>
+              <IconSymbol
+                ios_icon_name="trash.fill"
+                android_material_icon_name="delete"
+                size={16}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          </View>
         );
       })}
     </View>
@@ -115,14 +158,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   transactionCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
     elevation: 2,
+  },
+  transactionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -148,9 +194,21 @@ const styles = StyleSheet.create({
   transactionCategory: {
     fontSize: 13,
   },
+  transactionRight: {
+    marginLeft: 12,
+  },
   transactionAmount: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 6,
   },
   emptyCard: {
     borderRadius: 12,

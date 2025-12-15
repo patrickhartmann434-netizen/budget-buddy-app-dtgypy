@@ -134,6 +134,11 @@ export function useBudgetData() {
     loadData();
   }, []);
 
+  // Recalculate budget spent amounts when transactions change
+  useEffect(() => {
+    updateBudgetSpentAmounts();
+  }, [transactions]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -167,6 +172,25 @@ export function useBudgetData() {
       setBudgets(initialBudgets);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateBudgetSpentAmounts = async () => {
+    if (budgets.length === 0) return;
+
+    const updatedBudgets = budgets.map(budget => {
+      const spent = transactions
+        .filter(t => t.type === 'expense' && t.category === budget.category)
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      return { ...budget, spent };
+    });
+
+    setBudgets(updatedBudgets);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(updatedBudgets));
+    } catch (err) {
+      console.error('Error updating budget spent amounts:', err);
     }
   };
 

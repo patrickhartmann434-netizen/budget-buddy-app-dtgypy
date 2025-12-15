@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Stack } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -18,129 +17,146 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen
-          options={{
-            title: "BudgetBuddy",
-            headerLargeTitle: true,
-          }}
-        />
-        <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading your budget...</Text>
-        </View>
-      </>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading your budget...</Text>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <>
-        <Stack.Screen
-          options={{
-            title: "BudgetBuddy",
-            headerLargeTitle: true,
-          }}
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+        <IconSymbol 
+          ios_icon_name="exclamationmark.triangle.fill" 
+          android_material_icon_name="error" 
+          size={48} 
+          color={colors.error} 
         />
-        <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
-          <IconSymbol 
-            ios_icon_name="exclamationmark.triangle.fill" 
-            android_material_icon_name="error" 
-            size={48} 
-            color={colors.error} 
-          />
-          <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-        </View>
-      </>
+        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+      </View>
     );
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "BudgetBuddy",
-          headerLargeTitle: true,
-        }}
-      />
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Balance Card */}
-          <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
-            <Text style={styles.balanceLabel}>Current Balance</Text>
-            <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
-            <View style={styles.balanceRow}>
-              <View style={styles.balanceItem}>
-                <IconSymbol 
-                  ios_icon_name="arrow.down.circle.fill" 
-                  android_material_icon_name="arrow-downward" 
-                  size={20} 
-                  color="#fff" 
-                />
-                <Text style={styles.balanceItemLabel}>Income</Text>
-                <Text style={styles.balanceItemAmount}>${totalIncome.toFixed(2)}</Text>
-              </View>
-              <View style={styles.balanceItem}>
-                <IconSymbol 
-                  ios_icon_name="arrow.up.circle.fill" 
-                  android_material_icon_name="arrow-upward" 
-                  size={20} 
-                  color="#fff" 
-                />
-                <Text style={styles.balanceItemLabel}>Expenses</Text>
-                <Text style={styles.balanceItemAmount}>${totalExpenses.toFixed(2)}</Text>
-              </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>BudgetBuddy</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            Your Financial Overview
+          </Text>
+        </View>
+
+        {/* Balance Card */}
+        <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
+          <Text style={styles.balanceLabel}>Current Balance</Text>
+          <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+          <View style={styles.balanceRow}>
+            <View style={styles.balanceItem}>
+              <IconSymbol 
+                ios_icon_name="arrow.up.circle.fill" 
+                android_material_icon_name="arrow-upward" 
+                size={20} 
+                color="#fff" 
+              />
+              <Text style={styles.balanceItemLabel}>Income</Text>
+              <Text style={styles.balanceItemAmount}>${totalIncome.toFixed(2)}</Text>
+            </View>
+            <View style={styles.balanceItem}>
+              <IconSymbol 
+                ios_icon_name="arrow.down.circle.fill" 
+                android_material_icon_name="arrow-downward" 
+                size={20} 
+                color="#fff" 
+              />
+              <Text style={styles.balanceItemLabel}>Expenses</Text>
+              <Text style={styles.balanceItemAmount}>${totalExpenses.toFixed(2)}</Text>
             </View>
           </View>
+        </View>
 
-          {/* Quick Actions */}
-          <QuickActions />
+        {/* Quick Actions */}
+        <QuickActions />
 
-          {/* Budget Overview */}
-          <BudgetOverview budgets={budgets} />
-
-          {/* Recent Transactions */}
-          <RecentTransactions transactions={transactions.slice(0, 5)} />
-
-          {/* Savings Calculator CTA */}
+        {/* New Features Row */}
+        <View style={styles.featuresRow}>
           <TouchableOpacity 
-            style={[styles.savingsCard, { backgroundColor: colors.success }]}
-            onPress={() => router.push('/savings-calculator')}
+            style={[styles.featureCard, { backgroundColor: colors.accent }]}
+            onPress={() => router.push('/budget-projection')}
             activeOpacity={0.8}
-            accessibilityLabel="Open Savings Calculator"
-            accessibilityHint="Calculate how much you can save by reducing spending"
           >
-            <View style={styles.savingsCardContent}>
-              <IconSymbol 
-                ios_icon_name="chart.line.uptrend.xyaxis" 
-                android_material_icon_name="trending-up" 
-                size={32} 
-                color="#fff" 
-              />
-              <View style={styles.savingsCardText}>
-                <Text style={styles.savingsCardTitle}>Savings Calculator</Text>
-                <Text style={styles.savingsCardSubtitle}>
-                  See how much you can save by cutting back
-                </Text>
-              </View>
-              <IconSymbol 
-                ios_icon_name="chevron.right" 
-                android_material_icon_name="chevron-right" 
-                size={24} 
-                color="#fff" 
-              />
-            </View>
+            <IconSymbol 
+              ios_icon_name="chart.line.uptrend.xyaxis" 
+              android_material_icon_name="trending-up" 
+              size={28} 
+              color="#fff" 
+            />
+            <Text style={styles.featureCardTitle}>Budget Projection</Text>
+            <Text style={styles.featureCardSubtitle}>See your future</Text>
           </TouchableOpacity>
 
-          {/* Bottom padding */}
-          <View style={{ height: 20 }} />
-        </ScrollView>
-      </View>
-    </>
+          <TouchableOpacity 
+            style={[styles.featureCard, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/bank-connect')}
+            activeOpacity={0.8}
+          >
+            <IconSymbol 
+              ios_icon_name="building.columns.fill" 
+              android_material_icon_name="account-balance" 
+              size={28} 
+              color="#fff" 
+            />
+            <Text style={styles.featureCardTitle}>Connect Bank</Text>
+            <Text style={styles.featureCardSubtitle}>Coming soon</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Savings Calculator CTA */}
+        <TouchableOpacity 
+          style={[styles.savingsCard, { backgroundColor: colors.success }]}
+          onPress={() => router.push('/savings-calculator')}
+          activeOpacity={0.8}
+          accessibilityLabel="Open Savings Calculator"
+          accessibilityHint="Calculate how much you can save by reducing spending"
+        >
+          <View style={styles.savingsCardContent}>
+            <IconSymbol 
+              ios_icon_name="chart.line.uptrend.xyaxis" 
+              android_material_icon_name="trending-up" 
+              size={32} 
+              color="#fff" 
+            />
+            <View style={styles.savingsCardText}>
+              <Text style={styles.savingsCardTitle}>Savings Calculator</Text>
+              <Text style={styles.savingsCardSubtitle}>
+                See how much you can save by cutting back
+              </Text>
+            </View>
+            <IconSymbol 
+              ios_icon_name="chevron.right" 
+              android_material_icon_name="chevron-right" 
+              size={24} 
+              color="#fff" 
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* Budget Overview */}
+        <BudgetOverview budgets={budgets} />
+
+        {/* Recent Transactions */}
+        <RecentTransactions transactions={transactions.slice(0, 5)} />
+
+        {/* Bottom padding for tab bar */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -157,8 +173,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingTop: 20,
     paddingHorizontal: 16,
-    paddingTop: 16,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
   },
   balanceCard: {
     borderRadius: 20,
@@ -198,11 +226,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 2,
   },
+  featuresRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  featureCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
+  featureCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  featureCardSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+    textAlign: 'center',
+  },
   savingsCard: {
     borderRadius: 16,
     padding: 20,
-    marginTop: 16,
-    marginBottom: 16,
+    marginBottom: 24,
     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
     elevation: 4,
   },

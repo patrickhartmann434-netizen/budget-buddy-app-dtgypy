@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "BudgetBuddy",
-    "slug": "budgetbuddy",
+    "name": "Budget Buddy",
+    "slug": "Budget Buddy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/final_quest_240x240.png",
@@ -17,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.budgetbuddy.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
         "NSUserTrackingUsageDescription": "This app does not track you."
       }
     },
@@ -56,5 +57,6 @@
         "projectId": "your-project-id"
       }
     }
-  }
+  },
+  "scheme": "Budget Buddy"
 }

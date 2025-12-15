@@ -84,7 +84,40 @@ export default function HomeScreen() {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Savings Calculator CTA - Moved up */}
+        {/* New Features Row */}
+        <View style={styles.featuresRow}>
+          <TouchableOpacity 
+            style={[styles.featureCard, { backgroundColor: colors.accent }]}
+            onPress={() => router.push('/budget-projection')}
+            activeOpacity={0.8}
+          >
+            <IconSymbol 
+              ios_icon_name="chart.line.uptrend.xyaxis" 
+              android_material_icon_name="trending-up" 
+              size={28} 
+              color="#fff" 
+            />
+            <Text style={styles.featureCardTitle}>Budget Projection</Text>
+            <Text style={styles.featureCardSubtitle}>See your future</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.featureCard, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/bank-connect')}
+            activeOpacity={0.8}
+          >
+            <IconSymbol 
+              ios_icon_name="building.columns.fill" 
+              android_material_icon_name="account-balance" 
+              size={28} 
+              color="#fff" 
+            />
+            <Text style={styles.featureCardTitle}>Connect Bank</Text>
+            <Text style={styles.featureCardSubtitle}>Coming soon</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Savings Calculator CTA */}
         <TouchableOpacity 
           style={[styles.savingsCard, { backgroundColor: colors.success }]}
           onPress={() => router.push('/savings-calculator')}
@@ -192,6 +225,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     marginTop: 2,
+  },
+  featuresRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  featureCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
+  featureCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  featureCardSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+    textAlign: 'center',
   },
   savingsCard: {
     borderRadius: 16,
