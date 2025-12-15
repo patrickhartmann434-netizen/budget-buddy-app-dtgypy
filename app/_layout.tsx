@@ -19,11 +19,10 @@ import { WidgetProvider } from "@/contexts/WidgetContext";
 import { ThemeProvider as CustomThemeProvider, useThemeMode } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)", // Ensure any route can link back to `/`
+  initialRouteName: "(tabs)",
 };
 
 function RootLayoutNav() {
@@ -59,24 +58,24 @@ function RootLayoutNav() {
     ...DefaultTheme,
     dark: false,
     colors: {
-      primary: "rgb(0, 122, 255)", // System Blue
-      background: "rgb(242, 242, 247)", // Light mode background
-      card: "rgb(255, 255, 255)", // White cards/surfaces
-      text: "rgb(0, 0, 0)", // Black text for light mode
-      border: "rgb(216, 216, 220)", // Light gray for separators/borders
-      notification: "rgb(255, 59, 48)", // System Red
+      primary: "rgb(0, 122, 255)",
+      background: "rgb(242, 242, 247)",
+      card: "rgb(255, 255, 255)",
+      text: "rgb(0, 0, 0)",
+      border: "rgb(216, 216, 220)",
+      notification: "rgb(255, 59, 48)",
     },
   };
 
   const CustomDarkTheme: Theme = {
     ...DarkTheme,
     colors: {
-      primary: "rgb(10, 132, 255)", // System Blue (Dark Mode)
-      background: "rgb(1, 1, 1)", // True black background for OLED displays
-      card: "rgb(28, 28, 30)", // Dark card/surface color
-      text: "rgb(255, 255, 255)", // White text for dark mode
-      border: "rgb(44, 44, 46)", // Dark gray for separators/borders
-      notification: "rgb(255, 69, 58)", // System Red (Dark Mode)
+      primary: "rgb(10, 132, 255)",
+      background: "rgb(1, 1, 1)",
+      card: "rgb(28, 28, 30)",
+      text: "rgb(255, 255, 255)",
+      border: "rgb(44, 44, 46)",
+      notification: "rgb(255, 69, 58)",
     },
   };
 
@@ -87,10 +86,8 @@ function RootLayoutNav() {
         <WidgetProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack>
-              {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-              {/* Budget App Screens */}
               <Stack.Screen
                 name="savings-calculator"
                 options={{
@@ -105,13 +102,33 @@ function RootLayoutNav() {
                   title: "Settings",
                 }}
               />
+              <Stack.Screen
+                name="spending-charts"
+                options={{
+                  presentation: "card",
+                  title: "Spending Charts",
+                }}
+              />
+              <Stack.Screen
+                name="budget-projection"
+                options={{
+                  presentation: "card",
+                  title: "Budget Projection",
+                }}
+              />
+              <Stack.Screen
+                name="bank-connect"
+                options={{
+                  presentation: "card",
+                  title: "Connect Bank",
+                }}
+              />
 
-              {/* Budget Action Modals */}
               <Stack.Screen
                 name="add-income"
                 options={{
                   presentation: "formSheet",
-                  title: "Add Income",
+                  headerShown: false,
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: [0.9, 1.0],
                   sheetCornerRadius: 20,
@@ -121,7 +138,7 @@ function RootLayoutNav() {
                 name="add-expense"
                 options={{
                   presentation: "formSheet",
-                  title: "Add Expense",
+                  headerShown: false,
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: [0.9, 1.0],
                   sheetCornerRadius: 20,
@@ -131,14 +148,13 @@ function RootLayoutNav() {
                 name="set-budget"
                 options={{
                   presentation: "formSheet",
-                  title: "Set Budget",
+                  headerShown: false,
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: [0.9, 1.0],
                   sheetCornerRadius: 20,
                 }}
               />
 
-              {/* Modal Demo Screens */}
               <Stack.Screen
                 name="modal"
                 options={{

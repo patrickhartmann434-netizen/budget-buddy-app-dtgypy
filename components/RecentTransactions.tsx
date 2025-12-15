@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, Animated } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Transaction } from '@/types/budget';
 import { colors } from '@/styles/commonStyles';
@@ -9,6 +9,7 @@ import { defaultCategories } from '@/data/categories';
 import { useBudgetData } from '@/hooks/useBudgetData';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -39,6 +40,39 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           },
         },
       ]
+    );
+  };
+
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>,
+    transaction: Transaction
+  ) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.deleteAction,
+          {
+            transform: [{ translateX: trans }],
+          },
+        ]}
+      >
+        <View style={[styles.deleteButton, { backgroundColor: colors.error }]}>
+          <IconSymbol
+            ios_icon_name="trash.fill"
+            android_material_icon_name="delete"
+            size={24}
+            color="#fff"
+          />
+          <Text style={styles.deleteText}>Delete</Text>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -82,69 +116,72 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <Text style={[styles.title, { color: theme.colors.text }]}>Recent Transactions</Text>
       {transactions.map((transaction, index) => {
         const category = defaultCategories.find(c => c.name === transaction.category);
         const isIncome = transaction.type === 'income';
 
         return (
-          <View
+          <Swipeable
             key={transaction.id || index}
-            style={[styles.transactionCard, { backgroundColor: theme.colors.card }]}
+            renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, transaction)}
+            onSwipeableOpen={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              }
+              handleDelete(transaction);
+            }}
+            overshootRight={false}
+            friction={2}
+            rightThreshold={40}
           >
-            <View style={styles.transactionContent}>
-              <View style={styles.transactionLeft}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: category?.color || colors.primary },
-                  ]}
-                >
-                  <IconSymbol
-                    ios_icon_name={isIncome ? 'arrow.up.circle.fill' : 'arrow.down.circle.fill'}
-                    android_material_icon_name={isIncome ? 'arrow-upward' : 'arrow-downward'}
-                    size={20}
-                    color="#fff"
-                  />
+            <View
+              style={[styles.transactionCard, { backgroundColor: theme.colors.card }]}
+            >
+              <View style={styles.transactionContent}>
+                <View style={styles.transactionLeft}>
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      { backgroundColor: category?.color || colors.primary },
+                    ]}
+                  >
+                    <IconSymbol
+                      ios_icon_name={isIncome ? 'arrow.up.circle.fill' : 'arrow.down.circle.fill'}
+                      android_material_icon_name={isIncome ? 'arrow-upward' : 'arrow-downward'}
+                      size={20}
+                      color="#fff"
+                    />
+                  </View>
+                  <View style={styles.transactionInfo}>
+                    <Text style={[styles.transactionDescription, { color: theme.colors.text }]}>
+                      {transaction.description}
+                    </Text>
+                    <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>
+                      {transaction.category} • {formatDate(transaction.date)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.transactionInfo}>
-                  <Text style={[styles.transactionDescription, { color: theme.colors.text }]}>
-                    {transaction.description}
-                  </Text>
-                  <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>
-                    {transaction.category} • {formatDate(transaction.date)}
+                <View style={styles.transactionRight}>
+                  <Text
+                    style={[
+                      styles.transactionAmount,
+                      { color: isIncome ? colors.success : colors.error },
+                    ]}
+                  >
+                    {isIncome ? '+' : '-'}${transaction.amount.toFixed(2)}
                   </Text>
                 </View>
-              </View>
-              <View style={styles.transactionRight}>
-                <Text
-                  style={[
-                    styles.transactionAmount,
-                    { color: isIncome ? colors.success : colors.error },
-                  ]}
-                >
-                  {isIncome ? '+' : '-'}${transaction.amount.toFixed(2)}
-                </Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={[styles.deleteButton, { backgroundColor: colors.error }]}
-              onPress={() => handleDelete(transaction)}
-              activeOpacity={0.7}
-              accessibilityLabel="Delete transaction"
-            >
-              <IconSymbol
-                ios_icon_name="trash.fill"
-                android_material_icon_name="delete"
-                size={16}
-                color="#fff"
-              />
-            </TouchableOpacity>
-          </View>
+          </Swipeable>
         );
       })}
-    </View>
+      <Text style={[styles.swipeHint, { color: colors.textSecondary }]}>
+        💡 Swipe left on any transaction to delete it
+      </Text>
+    </GestureHandlerRootView>
   );
 }
 
@@ -168,7 +205,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -201,14 +237,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  deleteAction: {
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 6,
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  deleteButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingHorizontal: 12,
+  },
+  deleteText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
   },
   emptyCard: {
     borderRadius: 12,
@@ -221,5 +268,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginTop: 12,
+  },
+  swipeHint: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 12,
+    fontStyle: 'italic',
   },
 });

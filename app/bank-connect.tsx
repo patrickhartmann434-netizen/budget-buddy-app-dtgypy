@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@react-navigation/native';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
+import * as Haptics from 'expo-haptics';
 
 export default function BankConnect() {
   const theme = useTheme();
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const banks = [
     { id: '1', name: 'Chase Bank', icon: 'building-columns', color: '#0066CC' },
@@ -19,16 +21,42 @@ export default function BankConnect() {
     { id: '6', name: 'US Bank', icon: 'building-columns', color: '#0C2074' },
   ];
 
-  const handleConnect = () => {
+  const handleConnectPlaid = useCallback(async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+
     Alert.alert(
-      'Bank Connection Coming Soon',
-      'Bank account connectivity requires backend infrastructure with Plaid or similar services. This feature will be available in a future update.\n\nFor now, you can manually add your income and expenses using the Quick Actions on the home screen.',
+      'Plaid Integration Setup Required',
+      'To connect your bank account, you need to:\n\n' +
+      '1. Create a Plaid account at plaid.com\n' +
+      '2. Get your Plaid API keys (client_id and secret)\n' +
+      '3. Set up a backend server to:\n' +
+      '   • Generate link_tokens\n' +
+      '   • Exchange public_tokens for access_tokens\n' +
+      '   • Fetch transaction data\n\n' +
+      'The react-native-plaid-link-sdk package is already installed and ready to use once you have your backend set up.\n\n' +
+      'For now, you can manually add transactions using the Quick Actions on the home screen.',
       [
         {
-          text: 'Learn More',
+          text: 'View Plaid Docs',
           onPress: () => {
-            console.log('User wants to learn more about bank connectivity');
+            console.log('Opening Plaid documentation');
+            Alert.alert(
+              'Plaid Documentation',
+              'Visit plaid.com/docs to learn how to integrate Plaid into your app.\n\n' +
+              'Key steps:\n' +
+              '1. Sign up for Plaid\n' +
+              '2. Create a backend API\n' +
+              '3. Implement /create_link_token endpoint\n' +
+              '4. Implement /exchange_public_token endpoint\n' +
+              '5. Use PlaidLink component in React Native'
+            );
           },
+        },
+        {
+          text: 'Manual Entry',
+          onPress: () => router.back(),
         },
         {
           text: 'OK',
@@ -36,6 +64,13 @@ export default function BankConnect() {
         },
       ]
     );
+  }, []);
+
+  const handleBankSelect = (bankId: string) => {
+    setSelectedBank(bankId);
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
   };
 
   return (
@@ -53,7 +88,6 @@ export default function BankConnect() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Info */}
           <View style={[styles.infoCard, { backgroundColor: theme.colors.card }]}>
             <IconSymbol
               ios_icon_name="building.columns.fill"
@@ -69,7 +103,6 @@ export default function BankConnect() {
             </Text>
           </View>
 
-          {/* Coming Soon Notice */}
           <View style={[styles.noticeCard, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}>
             <IconSymbol
               ios_icon_name="info.circle.fill"
@@ -79,19 +112,17 @@ export default function BankConnect() {
             />
             <View style={styles.noticeContent}>
               <Text style={[styles.noticeTitle, { color: theme.colors.text }]}>
-                Feature Coming Soon
+                Setup Required
               </Text>
               <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
-                Bank connectivity requires secure backend infrastructure with services like Plaid. 
-                This feature is currently in development and will be available in a future update.
+                Bank connectivity requires a Plaid account and backend server. The SDK is installed and ready to use once you complete the setup.
               </Text>
             </View>
           </View>
 
-          {/* How It Will Work */}
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-              How It Will Work
+              What You Need
             </Text>
             <View style={styles.stepsList}>
               <View style={styles.stepItem}>
@@ -100,10 +131,10 @@ export default function BankConnect() {
                 </View>
                 <View style={styles.stepContent}>
                   <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
-                    Select Your Bank
+                    Plaid Account
                   </Text>
                   <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-                    Choose from thousands of supported financial institutions
+                    Sign up at plaid.com and get your API keys
                   </Text>
                 </View>
               </View>
@@ -114,10 +145,10 @@ export default function BankConnect() {
                 </View>
                 <View style={styles.stepContent}>
                   <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
-                    Secure Login
+                    Backend Server
                   </Text>
                   <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-                    Safely connect using bank-grade encryption
+                    Create endpoints for link_token and public_token exchange
                   </Text>
                 </View>
               </View>
@@ -128,17 +159,16 @@ export default function BankConnect() {
                 </View>
                 <View style={styles.stepContent}>
                   <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
-                    Auto-Import
+                    Integration
                   </Text>
                   <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-                    Transactions automatically sync to your budget
+                    Use PlaidLink component to connect banks
                   </Text>
                 </View>
               </View>
             </View>
           </View>
 
-          {/* Security Features */}
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Security & Privacy
@@ -191,10 +221,12 @@ export default function BankConnect() {
             </View>
           </View>
 
-          {/* Popular Banks Preview */}
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Supported Banks (Preview)
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+              Plaid supports 12,000+ financial institutions
             </Text>
             <View style={styles.banksList}>
               {banks.map((bank, index) => (
@@ -205,7 +237,7 @@ export default function BankConnect() {
                     { backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' },
                     selectedBank === bank.id && { borderColor: colors.primary, borderWidth: 2 },
                   ]}
-                  onPress={() => setSelectedBank(bank.id)}
+                  onPress={() => handleBankSelect(bank.id)}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.bankIcon, { backgroundColor: bank.color }]}>
@@ -224,11 +256,20 @@ export default function BankConnect() {
             </View>
           </View>
 
-          {/* CTA Button */}
+          <View style={[styles.codeCard, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Quick Start Code
+            </Text>
+            <Text style={[styles.codeText, { color: colors.textSecondary }]}>
+              {`// Example Plaid integration\nimport { PlaidLink } from 'react-native-plaid-link-sdk';\n\nconst config = {\n  token: linkToken, // from your backend\n};\n\nconst onSuccess = (success) => {\n  // Exchange public_token\n  exchangeToken(success.publicToken);\n};\n\n<PlaidLink\n  tokenConfig={config}\n  onSuccess={onSuccess}\n  onExit={(exit) => console.log(exit)}\n>\n  <TouchableOpacity>\n    <Text>Connect Bank</Text>\n  </TouchableOpacity>\n</PlaidLink>`}
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={[styles.connectButton, { backgroundColor: colors.primary }]}
-            onPress={handleConnect}
+            onPress={handleConnectPlaid}
             activeOpacity={0.8}
+            disabled={isConnecting}
           >
             <IconSymbol
               ios_icon_name="link.circle.fill"
@@ -236,10 +277,11 @@ export default function BankConnect() {
               size={24}
               color="#fff"
             />
-            <Text style={styles.connectButtonText}>Learn More</Text>
+            <Text style={styles.connectButtonText}>
+              {isConnecting ? 'Connecting...' : 'Setup Instructions'}
+            </Text>
           </TouchableOpacity>
 
-          {/* Manual Entry CTA */}
           <TouchableOpacity
             style={[styles.manualButton, { backgroundColor: theme.colors.card }]}
             onPress={() => router.back()}
@@ -319,6 +361,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
   },
+  cardSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
   stepsList: {
     gap: 20,
   },
@@ -385,6 +431,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  codeCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
+  },
+  codeText: {
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    lineHeight: 18,
   },
   connectButton: {
     flexDirection: 'row',

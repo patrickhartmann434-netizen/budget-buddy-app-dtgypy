@@ -19,7 +19,7 @@ export default function SetBudgetModal() {
 
   const expenseCategories = defaultCategories.filter(cat => cat.type === 'expense');
 
-  const backgroundColor = theme.dark ? 'rgb(28, 28, 30)' : theme.colors.background;
+  const backgroundColor = theme.dark ? 'rgb(28, 28, 30)' : 'rgb(242, 242, 247)';
 
   const periods = [
     { value: 'weekly' as const, label: 'Weekly' },
@@ -40,7 +40,6 @@ export default function SetBudgetModal() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      // Find existing budget for this category
       const existingBudget = budgets.find(b => b.category === selectedCategory);
       
       await updateBudget({
@@ -219,6 +218,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: 60,
   },
   header: {
     flexDirection: 'row',
@@ -296,6 +296,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 40,
   },
   submitButtonDisabled: {
     opacity: 0.6,

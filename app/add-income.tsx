@@ -19,7 +19,7 @@ export default function AddIncomeModal() {
 
   const incomeCategories = defaultCategories.filter(cat => cat.type === 'income');
 
-  const backgroundColor = theme.dark ? 'rgb(28, 28, 30)' : theme.colors.background;
+  const backgroundColor = theme.dark ? 'rgb(28, 28, 30)' : 'rgb(242, 242, 247)';
 
   const handleSubmit = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: 60,
   },
   header: {
     flexDirection: 'row',
@@ -261,6 +262,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 40,
   },
   submitButtonDisabled: {
     opacity: 0.6,
